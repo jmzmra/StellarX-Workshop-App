@@ -1,4 +1,4 @@
-# 🌍 Stellar GigRail
+# Stellar GigRail
 
 Cross-border gig payment rail that enables instant USDC payouts to Filipino freelancers using the Stellar network.
 
@@ -66,7 +66,7 @@ Track 1: Remittance & Cross-Border Payments
 
 ```bash
 git clone https://github.com/jmzmra/StellarX-Workshop-App.git
-cd Stellar-GigRail
+cd web
 npm install
 
 # environment variables needed:
