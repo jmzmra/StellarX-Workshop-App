@@ -1,4 +1,4 @@
-import { rpc, Networks, Asset } from '@stellar/stellar-sdk';
+import { rpc, Horizon, Networks, Asset } from '@stellar/stellar-sdk';
 
 // Network passphrase comes from the SDK constant, NOT a hardcoded string —
 // a wrong passphrase shows up as a misleading `tx_bad_auth` error.
@@ -8,11 +8,16 @@ export const RPC_URL =
   process.env.NEXT_PUBLIC_SOROBAN_RPC ?? 'https://soroban-testnet.stellar.org';
 export const HORIZON_URL =
   process.env.NEXT_PUBLIC_HORIZON_URL ?? 'https://horizon-testnet.stellar.org';
-export const USDC_ISSUER = process.env.NEXT_PUBLIC_USDC_ISSUER ?? '';
+export const USDC_ISSUER =
+  process.env.NEXT_PUBLIC_USDC_ISSUER ??
+  'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5';
 export const CONTRACT_ID = process.env.NEXT_PUBLIC_CONTRACT_ID ?? '';
 
-// v15 SDK: use the `rpc` namespace (the old `SorobanRpc` namespace is gone).
+// Soroban RPC server
 export const server = new rpc.Server(RPC_URL);
+
+// Horizon server (for classic payments/balances)
+export const horizon = new Horizon.Server(HORIZON_URL);
 
 export const XLM = Asset.native();
 export const USDC = USDC_ISSUER ? new Asset('USDC', USDC_ISSUER) : null;

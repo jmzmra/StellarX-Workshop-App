@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { fundTestnetAccount } from '@/lib/stellar';
+import { useNotification } from '@/components/Notification';
 
 export default function FundAccount({
   publicKey,
@@ -10,31 +11,29 @@ export default function FundAccount({
   onFunded: () => void;
 }) {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const { notify } = useNotification();
 
   const fund = async () => {
     setLoading(true);
-    setError('');
+    notify('Requesting testnet XLM from Friendbot...');
     try {
       await fundTestnetAccount(publicKey);
+      notify('Account funded successfully! 10,000 XLM added.', 'success');
       onFunded();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Funding failed');
+      notify(e instanceof Error ? e.message : 'Funding failed', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div>
-      <button
-        onClick={fund}
-        disabled={loading}
-        className="rounded bg-amber-400 px-3 py-1.5 text-sm font-medium text-amber-950 transition-colors hover:bg-amber-500 disabled:opacity-50"
-      >
-        {loading ? 'Funding…' : 'Fund with Friendbot (testnet)'}
-      </button>
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-    </div>
+    <button
+      onClick={fund}
+      disabled={loading}
+      className="w-full rounded-2xl bg-amber-400 py-4 text-sm font-black uppercase tracking-widest text-amber-950 transition-all hover:bg-amber-500 hover:shadow-lg active:scale-95 disabled:opacity-50 shadow-md shadow-amber-100"
+    >
+      {loading ? 'Processing...' : 'Request 10,000 XLM'}
+    </button>
   );
 }

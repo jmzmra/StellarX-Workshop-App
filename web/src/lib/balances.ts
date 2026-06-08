@@ -18,13 +18,13 @@ export async function fetchBalances(publicKey: string): Promise<Balances> {
 
     for (const b of account.balances) {
       if (b.asset_type === 'native') {
-        xlm = parseFloat(b.balance).toFixed(2);
+        xlm = parseFloat(b.balance).toFixed(4);
       } else if (
         (b.asset_type === 'credit_alphanum4' ||
           b.asset_type === 'credit_alphanum12') &&
         b.asset_code === 'USDC'
       ) {
-        usdc = parseFloat(b.balance).toFixed(2);
+        usdc = parseFloat(b.balance).toFixed(4);
       }
     }
     return { xlm, usdc, funded: true };

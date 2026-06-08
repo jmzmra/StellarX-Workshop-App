@@ -1,34 +1,33 @@
-# Your Project
-
-Fill this in as you build. It doubles as your **submission README**, and it maps
-directly to how projects are judged (meaningful Stellar use, real problem,
-working demo).
+# GigRail PH
 
 ## Idea
-- **Track:** Remittance / Financial Inclusion / DeFi & RWA / AI / Social Impact / Open
-- **Idea # (from the 300-ideas list, if any):**
-- **One-liner:**
+- **Track:** Remittance / Financial Inclusion
+- **Idea #:** Custom
+- **One-liner:** Instant USDC payouts for Filipino freelancers with near-zero fees.
 
 ## Problem
-Who has this problem, and why does it matter? (A clear Philippines remittance /
-payments / financial-inclusion angle scores well.)
+Filipino freelancers on global platforms (Upwork, Fiverr, etc.) often wait 3–7 days to receive their earnings and lose 3–5% in intermediary fees and poor exchange rates. This delay and cost hinder their financial stability.
 
 ## How it uses Stellar
-Which Stellar pieces are **core** (not cosmetic)? e.g. payments, trustlines,
-path payments, claimable balances, a Soroban contract, anchors (SEP-24/31),
-Soroswap/Blend/Reflector. Stellar must be central to the product.
+- **Asset (USDC):** Core payment unit to avoid volatility and high cross-border costs.
+- **Trustlines:** Required for freelancers to receive USDC securely.
+- **Classic Payments:** Used for sub-cent fees and 5-second settlement.
+- **Horizon API:** Used to fetch real-time USDC balances.
 
 ## What works in the demo
-- [ ] Connect wallet (Freighter, testnet)
-- [ ] Core flow runs end-to-end on testnet
-- [ ] _(your headline feature here)_
+- [x] Connect Freighter wallet (Testnet)
+- [x] Fund account via Friendbot
+- [x] Add USDC trustline
+- [x] Freelancer: Create payment requests (Invoices)
+- [x] Client: Approve and pay invoices instantly in USDC
+- [x] Real-time balance updates and transaction confirmation
 
 ## Setup / run
-How a judge runs it locally:
 - Network: **testnet**
 - `cd web && npm install && npm run dev`
-- Contract (if used): `.\scripts\deploy.ps1`, then set `NEXT_PUBLIC_CONTRACT_ID`
-- Any other env vars / steps:
+- Ensure Freighter is set to Testnet.
+- USDC Issuer (Testnet): `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`
+
 
 ## Demo
 - 2–4 min video link (show the core flow working on testnet):

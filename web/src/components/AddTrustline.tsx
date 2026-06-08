@@ -2,8 +2,7 @@
 import { useState } from 'react';
 import { buildAddUsdcTrustlineXDR } from '@/lib/trustline';
 import { signAndSubmit } from '@/lib/sign';
-
-type Status = 'idle' | 'working' | 'done' | 'error';
+import { useNotification } from '@/components/Notification';
 
 export default function AddTrustline({
   publicKey,
@@ -12,37 +11,44 @@ export default function AddTrustline({
   publicKey: string;
   onDone: () => void;
 }) {
-  const [status, setStatus] = useState<Status>('idle');
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isDone, setIsDone] = useState(false);
+  const { notify } = useNotification();
 
   const add = async () => {
-    setStatus('working');
-    setError('');
+    setLoading(true);
+    notify('Enabling USDC trustline on your account...');
     try {
       const xdr = await buildAddUsdcTrustlineXDR(publicKey);
       await signAndSubmit(xdr, publicKey);
-      setStatus('done');
+      notify('USDC trustline established!', 'success');
+      setIsDone(true);
       onDone();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to add trustline');
-      setStatus('error');
+      notify(e instanceof Error ? e.message : 'Failed to add trustline', 'error');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (status === 'done') {
-    return <p className="text-sm text-emerald-600">USDC trustline added.</p>;
+  if (isDone) {
+    return (
+      <div className="w-full flex items-center justify-center gap-2 rounded-2xl bg-emerald-50 py-4 text-sm font-black uppercase tracking-widest text-emerald-600 border border-emerald-100">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5">
+          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clipRule="evenodd" />
+        </svg>
+        USDC Asset Active
+      </div>
+    );
   }
 
   return (
-    <div>
-      <button
-        onClick={add}
-        disabled={status === 'working'}
-        className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
-      >
-        {status === 'working' ? 'Adding USDC trustline…' : 'Add USDC trustline'}
-      </button>
-      {error && <p className="mt-1 text-sm text-red-500">{error}</p>}
-    </div>
+    <button
+      onClick={add}
+      disabled={loading}
+      className="w-full rounded-2xl border border-slate-200 bg-white py-4 text-sm font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50 hover:border-slate-300 active:scale-95 disabled:opacity-50"
+    >
+      {loading ? 'Establishing...' : 'Enable USDC Asset'}
+    </button>
   );
 }

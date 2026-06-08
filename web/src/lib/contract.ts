@@ -15,8 +15,8 @@ import { server, NETWORK_PASSPHRASE, CONTRACT_ID } from './stellar';
 const READ_SOURCE = 'GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5';
 
 export interface SavingsState {
-  saved: number;
-  target: number;
+  saved: bigint;
+  target: bigint;
 }
 
 export function contractConfigured(): boolean {
@@ -45,7 +45,7 @@ export async function readSavingsState(): Promise<SavingsState> {
     saved: bigint;
     target: bigint;
   };
-  return { saved: Number(state.saved), target: Number(state.target) };
+  return state;
 }
 
 /**
@@ -76,6 +76,37 @@ export async function buildContributeXDR(
   const sim = await server.simulateTransaction(tx);
   if (!rpc.Api.isSimulationSuccess(sim)) {
     throw new Error('Simulation failed — the contribute call would not succeed.');
+  }
+
+  return rpc.assembleTransaction(tx, sim).build().toXDR();
+}
+
+/**
+ * Build + simulate + assemble an unsigned `init(target)` invocation.
+ */
+export async function buildInitXDR(
+  sender: string,
+  target: number,
+): Promise<string> {
+  const contract = new Contract(CONTRACT_ID);
+  const account = await server.getAccount(sender);
+
+  const tx = new TransactionBuilder(account, {
+    fee: BASE_FEE,
+    networkPassphrase: NETWORK_PASSPHRASE,
+  })
+    .addOperation(
+      contract.call(
+        'init',
+        nativeToScVal(BigInt(Math.trunc(target)), { type: 'i128' }),
+      ),
+    )
+    .setTimeout(30)
+    .build();
+
+  const sim = await server.simulateTransaction(tx);
+  if (!rpc.Api.isSimulationSuccess(sim)) {
+    throw new Error('Simulation failed — the init call would not succeed (is it already initialized?).');
   }
 
   return rpc.assembleTransaction(tx, sim).build().toXDR();

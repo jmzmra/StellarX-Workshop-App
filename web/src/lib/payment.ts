@@ -4,7 +4,7 @@ import {
   Asset,
   BASE_FEE,
 } from '@stellar/stellar-sdk';
-import { server, NETWORK_PASSPHRASE, USDC_ISSUER } from './stellar';
+import { horizon, NETWORK_PASSPHRASE, USDC_ISSUER } from './stellar';
 
 export type AssetCode = 'XLM' | 'USDC';
 
@@ -18,8 +18,8 @@ export async function buildPaymentXDR(
   const asset =
     assetCode === 'XLM' ? Asset.native() : new Asset('USDC', USDC_ISSUER);
 
-  // Always load the account fresh so we have the current sequence number.
-  const account = await server.getAccount(sender);
+  // Use Horizon to load the account (standard for classic payments)
+  const account = await horizon.loadAccount(sender);
 
   const tx = new TransactionBuilder(account, {
     fee: BASE_FEE,
@@ -35,25 +35,52 @@ export async function buildPaymentXDR(
 /** Submit a Freighter-signed XDR. Returns the transaction hash. */
 export async function submitSignedXDR(signedXdr: string): Promise<string> {
   const tx = TransactionBuilder.fromXDR(signedXdr, NETWORK_PASSPHRASE);
-  const res = await server.sendTransaction(tx);
-  if (res.status === 'ERROR') {
-    throw new Error(`Submit rejected: ${JSON.stringify(res.errorResult ?? res)}`);
+  
+  try {
+    const res = await horizon.submitTransaction(tx);
+    return res.hash;
+  } catch (e: any) {
+    // Horizon errors are in e.response.data.extras.result_codes
+    const resultCodes = e.response?.data?.extras?.result_codes;
+    if (resultCodes) {
+      const codes = [
+        resultCodes.transaction,
+        ...(resultCodes.operations || []),
+      ];
+      
+      if (codes.includes('op_no_trust')) {
+        throw new Error('Recipient has no USDC trustline. Ask them to click "Enable USDC".');
+      }
+      if (codes.includes('op_underfunded')) {
+        throw new Error('Insufficient funds. Check your USDC or XLM balance.');
+      }
+      if (codes.includes('op_no_destination')) {
+        throw new Error('Recipient account does not exist. Fund it with XLM first.');
+      }
+      throw new Error(`Stellar Error: ${codes.join(', ')}`);
+    }
+    throw e;
   }
-  return res.hash;
 }
 
 /**
  * Poll until the transaction reaches finality.
- * `sendTransaction` returning PENDING is NOT success — you must poll.
+ * For Horizon, submitTransaction already waits for ledger inclusion,
+ * so polling is often just a secondary check or for multi-stage flows.
  */
 export async function pollTransaction(hash: string): Promise<void> {
-  for (let i = 0; i < 60; i++) {
-    await new Promise((r) => setTimeout(r, 1000));
-    const res = await server.getTransaction(hash);
-    if (res.status !== 'NOT_FOUND') {
-      if (res.status === 'SUCCESS') return;
-      throw new Error(`Transaction ${res.status}`);
+  for (let i = 0; i < 30; i++) {
+    try {
+      const res = await horizon.transactions().transaction(hash).call();
+      if (res.successful) return;
+      throw new Error('Transaction failed on-chain');
+    } catch (e: any) {
+      if (e.response?.status === 404) {
+        await new Promise((r) => setTimeout(r, 2000));
+        continue;
+      }
+      throw e;
     }
   }
-  throw new Error('Transaction timed out after 60s');
+  throw new Error('Transaction timeout');
 }
